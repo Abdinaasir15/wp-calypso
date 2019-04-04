@@ -207,14 +207,6 @@ const webpackConfig = {
 				cacheIdentifier,
 				include: shouldTranspileDependency,
 			} ),
-			{
-				test: /node_modules[/\\](redux-form|react-redux)[/\\]es/,
-				loader: 'babel-loader',
-				options: {
-					babelrc: false,
-					plugins: [ path.join( __dirname, 'server', 'bundler', 'babel', 'babel-lodash-es' ) ],
-				},
-			},
 			SassConfig.loader( {
 				preserveCssCustomProperties: true,
 				includePaths: [ path.join( __dirname, 'client' ) ],
