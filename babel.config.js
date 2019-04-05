@@ -7,8 +7,6 @@ const isBrowser = process.env.BROWSERSLIST_ENV !== 'server';
 
 // Use commonjs for Node
 const modules = isBrowser ? false : 'commonjs';
-// Use lodash-es for client and lodash for server.
-const [ from, to ] = isBrowser ? [ 'lodash', 'lodash-es' ] : [ 'lodash-es', 'lodash' ];
 const codeSplit = require( './server/config' ).isEnabled( 'code-splitting' );
 
 // We implicitly use browserslist configuration in package.json for build targets.
@@ -29,7 +27,15 @@ const config = {
 	],
 	plugins: _.compact( [
 		[ '@automattic/transform-wpcalypso-async', { async: isBrowser && codeSplit } ],
-		[ path.join( __dirname, 'server', 'bundler', 'babel', 'babel-lodash-es' ), { from, to } ],
+		isBrowser && [
+			'module-resolver',
+			{
+				alias: {
+					lodash: 'lodash-es',
+					'lodash/': ( [ , name ] ) => `lodash-es/${ name }`,
+				},
+			},
+		],
 		isBrowser && './inline-imports.js',
 	] ),
 	env: {
@@ -52,7 +58,15 @@ const config = {
 			plugins: [
 				'add-module-exports',
 				'babel-plugin-dynamic-import-node',
-				[ './server/bundler/babel/babel-lodash-es', { from: 'lodash-es', to: 'lodash' } ],
+				[
+					'module-resolver',
+					{
+						alias: {
+							'lodash-es': 'lodash',
+							'lodash-es/': ( [ , name ] ) => `lodash/${ name }`,
+						},
+					},
+				],
 			],
 		},
 	},
