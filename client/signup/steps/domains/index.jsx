@@ -17,7 +17,6 @@ import TrademarkClaimsNotice from 'components/domains/trademark-claims-notice';
 import TransferDomainStep from 'components/domains/transfer-domain-step';
 import UseYourDomainStep from 'components/domains/use-your-domain-step';
 import RegisterDomainStep from 'components/domains/register-domain-step';
-import SignupActions from 'lib/signup/actions';
 import { getStepUrl } from 'signup/utils';
 import StepWrapper from 'signup/step-wrapper';
 import { cartItems } from 'lib/cart-values';
@@ -41,6 +40,7 @@ import QueryProductsList from 'components/data/query-products-list';
 import { getAvailableProductsList } from 'state/products-list/selectors';
 import { getSuggestionsVendor } from 'lib/domains/suggestions';
 import { getSite } from 'state/sites/selectors';
+import { saveSignupStep, submitSignupStep } from 'state/signup/progress/actions';
 
 /**
  * Style dependencies
@@ -86,7 +86,7 @@ class DomainsStep extends React.Component {
 		if ( flowName === 'import' && importSiteUrl ) {
 			this.skipRender = true;
 
-			SignupActions.submitSignupStep( {
+			props.submitSignupStep( {
 				flowName,
 				siteUrl: importSiteUrl,
 				stepName: props.stepName,
@@ -116,7 +116,7 @@ class DomainsStep extends React.Component {
 			const productSlug = getDomainProductSlug( domain );
 			const domainItem = cartItems.domainRegistration( { productSlug, domain } );
 
-			SignupActions.submitSignupStep(
+			props.submitSignupStep(
 				{
 					stepName: props.stepName,
 					domainItem,
@@ -178,7 +178,7 @@ class DomainsStep extends React.Component {
 			return;
 		}
 
-		SignupActions.saveSignupStep( stepData );
+		this.props.saveSignupStep( stepData );
 
 		defer( () => {
 			this.submitWithDomain();
@@ -213,7 +213,7 @@ class DomainsStep extends React.Component {
 
 	handleSkip = () => {
 		const domainItem = undefined;
-		SignupActions.submitSignupStep( { stepName: this.props.stepName, domainItem }, { domainItem } );
+		this.props.submitSignupStep( { stepName: this.props.stepName, domainItem }, { domainItem } );
 		this.props.goToNextStep();
 	};
 
@@ -232,7 +232,7 @@ class DomainsStep extends React.Component {
 
 		this.props.submitDomainStepSelection( suggestion, this.getAnalyticsSection() );
 
-		SignupActions.submitSignupStep(
+		this.props.submitSignupStep(
 			Object.assign(
 				{
 					stepName: this.props.stepName,
@@ -260,7 +260,7 @@ class DomainsStep extends React.Component {
 
 		this.props.recordAddDomainButtonClickInMapDomain( domain, this.getAnalyticsSection() );
 
-		SignupActions.submitSignupStep(
+		this.props.submitSignupStep(
 			Object.assign(
 				{
 					stepName: this.props.stepName,
@@ -290,7 +290,7 @@ class DomainsStep extends React.Component {
 
 		this.props.recordAddDomainButtonClickInTransferDomain( domain, this.getAnalyticsSection() );
 
-		SignupActions.submitSignupStep(
+		this.props.submitSignupStep(
 			Object.assign(
 				{
 					stepName: this.props.stepName,
@@ -309,7 +309,7 @@ class DomainsStep extends React.Component {
 	};
 
 	handleSave = ( sectionName, state ) => {
-		SignupActions.saveSignupStep( {
+		this.props.saveSignupStep( {
 			stepName: this.props.stepName,
 			stepSectionName: this.props.stepSectionName,
 			[ sectionName ]: state,
@@ -446,8 +446,7 @@ class DomainsStep extends React.Component {
 	};
 
 	transferForm = () => {
-		const initialQuery =
-			this.props.step && this.props.step.domainForm && this.props.step.domainForm.lastQuery;
+		const initialQuery = get( this.props.step, 'domainForm.lastQuery' );
 
 		return (
 			<div className="domains__step-section-wrapper" key="transferForm">
@@ -468,8 +467,7 @@ class DomainsStep extends React.Component {
 	};
 
 	useYourDomainForm = () => {
-		const initialQuery =
-			this.props.step && this.props.step.domainForm && this.props.step.domainForm.lastQuery;
+		const initialQuery = get( this.props.step, 'domainForm.lastQuery' );
 
 		return (
 			<div className="domains__step-section-wrapper" key="useYourDomainForm">
@@ -673,5 +671,7 @@ export default connect(
 		recordAddDomainButtonClickInUseYourDomain,
 		submitDomainStepSelection,
 		setDesignType,
+		saveSignupStep,
+		submitSignupStep,
 	}
 )( localize( DomainsStep ) );

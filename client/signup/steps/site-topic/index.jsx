@@ -11,13 +11,13 @@ import { localize } from 'i18n-calypso';
 /**
  * Internal dependencies
  */
-import SignupActions from 'lib/signup/actions';
 import SiteTopicForm from './form';
 import StepWrapper from 'signup/step-wrapper';
 import { getSiteType } from 'state/signup/steps/site-type/selectors';
 import { getSiteTypePropertyValue } from 'lib/signup/site-type';
 import { getSiteVerticalIsUserInput } from 'state/signup/steps/site-vertical/selectors';
 import { submitSiteVertical } from 'state/signup/steps/site-vertical/actions';
+import { saveSignupStep } from 'state/signup/progress/actions';
 
 class SiteTopicStep extends Component {
 	static propTypes = {
@@ -37,10 +37,14 @@ class SiteTopicStep extends Component {
 	};
 
 	componentDidMount() {
-		SignupActions.saveSignupStep( {
-			stepName: this.props.stepName,
-		} );
+		this.props.saveSignupStep( { stepName: this.props.stepName } );
 	}
+
+	submitSiteTopic = ( { isUserInput, name, slug } ) => {
+		const { flowName, stepName } = this.props;
+		this.props.submitSiteVertical( { isUserInput, name, slug }, stepName );
+		this.props.goToNextStep( flowName );
+	};
 
 	getTextFromSiteType() {
 		// once we have more granular copies per segments, these should only be used for the default case.
@@ -70,7 +74,7 @@ class SiteTopicStep extends Component {
 					subHeaderText={ commonSubHeaderText }
 					fallbackSubHeaderText={ commonSubHeaderText }
 					signupProgress={ this.props.signupProgress }
-					stepContent={ <SiteTopicForm submitForm={ this.props.submitSiteTopic } /> }
+					stepContent={ <SiteTopicForm submitForm={ this.submitSiteTopic } /> }
 					showSiteMockups={ this.props.showSiteMockups }
 				/>
 			</div>
@@ -78,29 +82,10 @@ class SiteTopicStep extends Component {
 	}
 }
 
-const mapDispatchToProps = ( dispatch, ownProps ) => ( {
-	submitSiteTopic: ( { isUserInput, name, slug } ) => {
-		const { flowName, goToNextStep, stepName } = ownProps;
-
-		dispatch(
-			submitSiteVertical(
-				{
-					isUserInput,
-					name,
-					slug,
-				},
-				stepName
-			)
-		);
-
-		goToNextStep( flowName );
-	},
-} );
-
 export default connect(
 	state => ( {
 		siteType: getSiteType( state ),
 		isUserInput: getSiteVerticalIsUserInput( state ),
 	} ),
-	mapDispatchToProps
+	{ saveSignupStep, submitSiteVertical }
 )( localize( SiteTopicStep ) );

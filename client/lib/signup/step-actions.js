@@ -40,7 +40,6 @@ import { getProductsList } from 'state/products-list/selectors';
 import { getSelectedImportEngine, getNuxUrlInputValue } from 'state/importer-nux/temp-selectors';
 
 // Current directory dependencies
-import SignupActions from './actions';
 import { isValidLandingPageVertical } from './verticals';
 import { getSiteTypePropertyValue } from './site-type';
 import SignupCart from './cart';
@@ -572,15 +571,15 @@ function shouldExcludeStep( stepName, fulfilledDependencies ) {
 }
 
 export function isDomainFulfilled( stepName, defaultDependencies, nextProps ) {
-	const { siteDomains } = nextProps;
+	const { siteDomains, submitSignupStep } = nextProps;
 	let fulfilledDependencies = [];
 
 	if ( siteDomains && siteDomains.length > 1 ) {
 		const domainItem = undefined;
-		SignupActions.submitSignupStep( { stepName, domainItem }, { domainItem } );
+		submitSignupStep( { stepName, domainItem }, { domainItem } );
 		recordExcludeStepEvent( stepName, siteDomains );
 
-		fulfilledDependencies = fulfilledDependencies.concat( [ 'domainItem' ] );
+		fulfilledDependencies = [ 'domainItem' ];
 	}
 
 	if ( shouldExcludeStep( stepName, fulfilledDependencies ) ) {
@@ -589,19 +588,19 @@ export function isDomainFulfilled( stepName, defaultDependencies, nextProps ) {
 }
 
 export function isPlanFulfilled( stepName, defaultDependencies, nextProps ) {
-	const { isPaidPlan, sitePlanSlug } = nextProps;
+	const { isPaidPlan, sitePlanSlug, submitSignupStep } = nextProps;
 	let fulfilledDependencies = [];
 
 	if ( isPaidPlan ) {
 		const cartItem = undefined;
-		SignupActions.submitSignupStep( { stepName, cartItem }, { cartItem } );
+		submitSignupStep( { stepName, cartItem }, { cartItem } );
 		recordExcludeStepEvent( stepName, sitePlanSlug );
-		fulfilledDependencies = fulfilledDependencies.concat( [ 'cartItem' ] );
+		fulfilledDependencies = [ 'cartItem' ];
 	} else if ( defaultDependencies && defaultDependencies.cartItem ) {
 		const cartItem = getCartItemForPlan( defaultDependencies.cartItem );
-		SignupActions.submitSignupStep( { stepName, cartItem }, { cartItem } );
+		submitSignupStep( { stepName, cartItem }, { cartItem } );
 		recordExcludeStepEvent( stepName, defaultDependencies.cartItem );
-		fulfilledDependencies = fulfilledDependencies.concat( [ 'cartItem' ] );
+		fulfilledDependencies = [ 'cartItem' ];
 	}
 
 	if ( shouldExcludeStep( stepName, fulfilledDependencies ) ) {
@@ -657,12 +656,9 @@ export function isSiteTopicFulfilled( stepName, defaultDependencies, nextProps )
 	if ( vertical && -1 === flowSteps.indexOf( 'survey' ) ) {
 		debug( 'From query string: vertical = %s', vertical );
 
-		nextProps.setSurvey( {
-			vertical,
-			otherText: '',
-		} );
+		nextProps.setSurvey( { vertical, otherText: '' } );
 
-		SignupActions.submitSignupStep(
+		nextProps.submitSignupStep(
 			{ stepName: 'survey' },
 			{ surveySiteType: 'blog', surveyQuestion: vertical }
 		);
