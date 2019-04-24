@@ -326,7 +326,7 @@ const polyfillsSkippedInEvergreen = [
 if ( browserslistEnv === 'evergreen' ) {
 	for ( const polyfill of polyfillsSkippedInEvergreen ) {
 		webpackConfig.plugins.push(
-			new webpack.NormalModuleReplacementPlugin( polyfill, 'lodash/noop' )
+			new webpack.NormalModuleReplacementPlugin( polyfill, 'lodash-es/noop' )
 		);
 	}
 }
