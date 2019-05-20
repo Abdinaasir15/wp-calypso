@@ -38,6 +38,7 @@ import { getUserExperience } from 'state/signup/steps/user-experience/selectors'
 import { requestSites } from 'state/sites/actions';
 import { getProductsList } from 'state/products-list/selectors';
 import { getSelectedImportEngine, getNuxUrlInputValue } from 'state/importer-nux/temp-selectors';
+import { getCurrentUserName } from 'state/current-user/selectors';
 
 // Current directory dependencies
 import { isValidLandingPageVertical } from './verticals';
@@ -181,7 +182,10 @@ export function createSiteWithCart(
 		flowName === 'onboarding-for-business' &&
 		'remove' === getABTestVariation( 'removeDomainsStepFromOnboarding' )
 	) {
-		newSiteParams.blog_name = get( user.get(), 'username', siteTitle ) || siteType || siteVertical;
+		const username =
+			getCurrentUserName( state ) || dependencies.username || siteTitle || siteType || siteVertical;
+
+		newSiteParams.blog_name = username;
 		newSiteParams.find_available_url = true;
 	} else {
 		newSiteParams.blog_name = siteUrl;
