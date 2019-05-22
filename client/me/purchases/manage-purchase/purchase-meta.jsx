@@ -39,6 +39,7 @@ import { getPlan } from 'lib/plans';
 
 import { getByPurchaseId, hasLoadedUserPurchasesFromServer } from 'state/purchases/selectors';
 import { fetchSitePurchases } from 'state/purchases/actions';
+import { errorNotice } from 'state/notices/actions';
 import { getSite, isRequestingSites } from 'state/sites/selectors';
 import { getUser } from 'state/users/selectors';
 import { managePurchase } from '../paths';
@@ -62,14 +63,30 @@ class PurchaseMeta extends Component {
 	static defaultProps = {
 		hasLoadedSites: false,
 		hasLoadedUserPurchasesFromServer: false,
-		purchaseId: false,
+		purchaseId: null,
 	};
 
+	// The reason that we have a separate UI state for the toggle here is for implementing the optimistic UI behavior,
+	// so users won't feel the toggling being laggy.
 	state = {
 		...( config.isEnabled( 'autorenewal-toggle' ) && {
-			isAutorenewalEnabled: false,
+			autoRenewUiToggled: false,
+			purchaseId: null,
 		} ),
 	};
+
+	static getDerivedStateFromProps( nextProps, prevState ) {
+		const { purchaseId, isAutoRenewEnabled } = nextProps;
+
+		if ( purchaseId && ! prevState.purchaseId ) {
+			return {
+				autoRenewUiToggled: isAutoRenewEnabled,
+				purchaseId,
+			};
+		}
+
+		return null;
+	}
 
 	renderPrice() {
 		const { purchase, translate } = this.props;
@@ -302,29 +319,41 @@ class PurchaseMeta extends Component {
 		);
 	}
 
-	onToggleAutorenewal = () => {
+	onToggleAutoRenew = () => {
 		const {
 			purchase: { id: purchaseId, siteId },
-			isAutorenewalEnabled,
+			isAutoRenewEnabled,
+			translate,
 		} = this.props;
 
-		if ( isAutorenewalEnabled ) {
-			disableAutoRenew( purchaseId, success => {
-				if ( success ) {
-					this.props.fetchSitePurchases( siteId );
-				}
+		const { autoRenewUiToggled: originalToggleStatus } = this.state;
+
+		this.setState( {
+			autoRenewUiToggled: ! originalToggleStatus,
+		} );
+
+		const updateAutoRenewAction = isAutoRenewEnabled ? disableAutoRenew : enableAutoRenew;
+
+		updateAutoRenewAction( purchaseId, success => {
+			if ( success ) {
+				this.props.fetchSitePurchases( siteId );
+				return;
+			}
+
+			this.props.errorNotice(
+				translate(
+					'We encountered an error on changing your auto-renewal state. Please try again.'
+				)
+			);
+
+			this.setState( {
+				autoRenewUiToggled: originalToggleStatus,
 			} );
-		} else {
-			enableAutoRenew( purchaseId, success => {
-				if ( success ) {
-					this.props.fetchSitePurchases( siteId );
-				}
-			} );
-		}
+		} );
 	};
 
 	renderExpiration() {
-		const { purchase, translate, isAutorenewalEnabled } = this.props;
+		const { purchase, translate } = this.props;
 
 		if ( isDomainTransfer( purchase ) ) {
 			return null;
@@ -338,11 +367,13 @@ class PurchaseMeta extends Component {
 			isPlan( purchase ) &&
 			! isExpired( purchase )
 		) {
+			const { autoRenewUiToggled } = this.state;
+
 			const dateSpan = <span className="manage-purchase__detail-date-span" />;
-			const subsRenewText = isAutorenewalEnabled
+			const subsRenewText = autoRenewUiToggled
 				? translate( 'Auto-renew is ON' )
 				: translate( 'Auto-renew is OFF' );
-			const subsBillingText = isAutorenewalEnabled
+			const subsBillingText = autoRenewUiToggled
 				? translate( 'You will be billed on {{dateSpan}}%(renewDate)s{{/dateSpan}}', {
 						args: {
 							renewDate: purchase.renewMoment.format( 'LL' ),
@@ -366,7 +397,7 @@ class PurchaseMeta extends Component {
 					<span className="manage-purchase__detail">{ subsRenewText }</span>
 					<span className="manage-purchase__detail">{ subsBillingText }</span>
 					<span className="manage-purchase__detail">
-						<FormToggle checked={ isAutorenewalEnabled } onChange={ this.onToggleAutorenewal } />
+						<FormToggle checked={ autoRenewUiToggled } onChange={ this.onToggleAutoRenew } />
 					</span>
 				</li>
 			);
@@ -427,10 +458,11 @@ export default connect(
 			purchase,
 			site: purchase ? getSite( state, purchase.siteId ) : null,
 			owner: purchase ? getUser( state, purchase.userId ) : null,
-			isAutorenewalEnabled: purchase ? ! isExpiring( purchase ) : null,
+			isAutoRenewEnabled: purchase ? ! isExpiring( purchase ) : null,
 		};
 	},
 	{
 		fetchSitePurchases,
+		errorNotice,
 	}
 )( localize( PurchaseMeta ) );
