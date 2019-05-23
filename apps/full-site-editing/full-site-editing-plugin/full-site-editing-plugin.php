@@ -5,6 +5,7 @@
 
 require_once( 'blocks/post-content/index.php' );
 require_once( 'blocks/template/index.php' );
+require_once( 'lib/feature-flag/feature-flag.php' );
 
 class A8C_Full_Site_Editing {
 	static $initialized = false;
@@ -41,6 +42,8 @@ class A8C_Full_Site_Editing {
 	}
 
 	function enqueue_script_and_style() {
+		global $feature_flags;
+
 		$script_dependencies = json_decode( file_get_contents(
 			plugin_dir_path( __FILE__ ) . 'dist/full-site-editing-plugin.deps.json'
 		), true );
@@ -53,6 +56,7 @@ class A8C_Full_Site_Editing {
 		);
 
 		wp_localize_script( 'a8c-full-site-editing-script', 'fullSiteEditing', array(
+			'featureFlags'  => $feature_flags->get_flags(),
 			'editorPostType' => get_current_screen()->post_type,
 		) );
 
