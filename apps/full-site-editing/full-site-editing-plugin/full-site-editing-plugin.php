@@ -5,7 +5,7 @@
 
 require_once( 'blocks/post-content/index.php' );
 require_once( 'blocks/template/index.php' );
-require_once( 'lib/feature-flag/feature-flag.php' );
+require_once( 'lib/feature-flags/feature-flags.php' );
 
 class A8C_Full_Site_Editing {
 	static $initialized = false;
