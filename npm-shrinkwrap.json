@@ -76,7 +76,11 @@
 			}
 		},
 		"@automattic/load-script": {
-			"version": "file:packages/load-script"
+			"version": "file:packages/load-script",
+			"requires": {
+				"@babel/runtime": "^7.4.4",
+				"debug": "^3.2.6"
+			}
 		},
 		"@automattic/material-design-icons": {
 			"version": "file:packages/material-design-icons"
@@ -86,6 +90,10 @@
 		},
 		"@automattic/tree-select": {
 			"version": "file:packages/tree-select"
+		},
+		"@automattic/webpack-inline-constant-exports-plugin": {
+			"version": "file:packages/webpack-inline-constant-exports-plugin",
+			"dev": true
 		},
 		"@automattic/wordpress-external-dependencies-plugin": {
 			"version": "file:packages/wordpress-external-dependencies-plugin",
